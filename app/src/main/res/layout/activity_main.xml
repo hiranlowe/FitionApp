@@ -1,4 +1,5 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -12,17 +13,35 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="26dp"
         android:ems="10"
-        android:hint="Welcome - Fition App"
-        android:textAlignment="textStart"
-        android:textSize="20sp" />
+        android:hint="FiTion"
+        android:text="FiTion"
+        android:textAlignment="center"
+        android:textColor="#2196F3"
+        android:textSize="34sp"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="294dp"
+        android:layout_below="@+id/editText1"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="-2dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="-3dp"
+        android:foreground="@drawable/banner1" />
 
     <Button
         android:id="@+id/button1"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/editText1"
+        android:layout_width="203dp"
+        android:layout_height="55dp"
+        android:layout_below="@+id/imageView"
         android:layout_centerHorizontal="true"
-        android:text="Connect" />
+        android:layout_marginTop="-7dp"
+        android:text="Connect"
+        app:iconTint="@color/blue" />
 
 
     <ListView
@@ -30,7 +49,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/button1"
-        android:layout_centerHorizontal="true">
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="0dp">
+
 
     </ListView>
 
@@ -47,7 +72,9 @@
         android:layout_marginBottom="16dp"
         android:contentDescription="History"
         android:onClick="getHistory"
-        android:src="@drawable/notification_icon" />
+        android:src="@android:drawable/ic_menu_agenda"
+        app:backgroundTint="#2196F3"
+        app:rippleColor="#03A9F4" />
 
 </RelativeLayout>
 

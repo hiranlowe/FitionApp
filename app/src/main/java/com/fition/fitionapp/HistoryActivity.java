@@ -64,9 +64,11 @@ public class HistoryActivity extends AppCompatActivity {
             }
         }catch (Exception e){
             e.printStackTrace();
+        }finally {
+            adapter.notifyDataSetChanged();
         }
 
-        adapter.notifyDataSetChanged();
+
         return;
     }
 

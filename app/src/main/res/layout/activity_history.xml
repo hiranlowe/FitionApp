@@ -13,8 +13,11 @@
         android:layout_marginTop="26dp"
         android:ems="10"
         android:hint="Activity History"
+        android:text="Activity History"
         android:textAlignment="center"
-        android:textSize="20sp" />
+        android:textColor="#2196F3"
+        android:textSize="34sp"
+        android:textStyle="bold" />
 
 
     <ListView

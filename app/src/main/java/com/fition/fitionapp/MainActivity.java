@@ -17,6 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +40,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -62,11 +65,8 @@ public class MainActivity extends AppCompatActivity {
 
 //    EditText GetValue;
     List <String> msgs = new ArrayList<>();
-    String[] ListElements = new String[] {
-            "Falling - 15.45 PM 08-02-2022",
-            "Walking - 13.20 PM 15-02-2022",
-            "Walking - 08.37 PM 18-02-2022",
-    };
+    List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+    Map<String, String> datum = new HashMap<String, String>(2);
 
 
 
@@ -85,10 +85,15 @@ public class MainActivity extends AppCompatActivity {
         fab = findViewById(R.id.fab);
 //        GetValue = findViewById(R.id.editText1);
 
-        final List<String> ListElementsArrayList = new ArrayList<>(Arrays.asList(ListElements));
-        final ArrayAdapter<String> adapter = new ArrayAdapter<>
-                (MainActivity.this, android.R.layout.simple_list_item_1, ListElementsArrayList);
-        listview.setAdapter(adapter);
+        datum.put("First Line", "First line of text");
+        datum.put("Second Line","Second line of text");
+        data.add(datum);
+        SimpleAdapter adapter = new SimpleAdapter(MainActivity.this, data,
+                R.layout.list_view,
+                new String[] {"First Line", "Second Line" },
+                new int[] {R.id.text1, R.id.text2 });
+        ListView listView = (ListView) findViewById(R.id.listView1);
+        listView.setAdapter(adapter);
 
         addButton.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.N)
@@ -141,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
                             public void run() {
 
                                 // Stuff that updates the UI
-                                showActi(msg, adapter, ListElementsArrayList);
+                                showActi(msg, adapter);
 
                             }
                         });
@@ -165,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 //publish a message to the topic "my/test/topic"
                 client.publishWith()
                         .topic("my/test/topic")
-                        .payload(UTF_8.encode("Falling | Falling | 0.91 | 02.35PM"))
+                        .payload(UTF_8.encode("sentiment"+" "+"sentiment_text"+"-"+"str(probability)"+" "+"current_time"))
                         .send();
             }
         });
@@ -216,8 +221,11 @@ public class MainActivity extends AppCompatActivity {
         return;
     }
 
-    private void showActi(String msg, ArrayAdapter<String> adapter, List<String> ListElementsArrayList){
-        ListElementsArrayList.add(msg);
+    private void showActi(String msg, SimpleAdapter adapter){
+        String[] parts = msg.split("-");
+        datum.put("First Line", parts[0]);
+        datum.put("Second Line",parts[1]);
+        data.add(datum);
         adapter.notifyDataSetChanged();
         return;
     }

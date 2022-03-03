@@ -2,13 +2,18 @@ package com.fition.fitionapp;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toolbar;
 
@@ -21,13 +26,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HistoryActivity extends AppCompatActivity {
 
     TextView textView;
-    String[] ListElements = new String[] {};
+    List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+    Map<String, String> datum = new HashMap<String, String>(2);
+
     ListView listview;
+    SwipeRefreshLayout mySwipeRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,22 +47,33 @@ public class HistoryActivity extends AppCompatActivity {
         // Get a support ActionBar corresponding to this toolbar
         ActionBar ab = getSupportActionBar();
         listview = findViewById(R.id.listView2);
+        mySwipeRefreshLayout = findViewById(R.id.swiperefresh);
         // Enable the Up button
         ab.setDisplayHomeAsUpEnabled(true);
 
         // Get the Intent that started this activity and extract the string
         Intent intent = getIntent();
         String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
-
-        // Capture the layout's TextView and set the string as its text
-
-
         // create object of MyAsyncTasks class and execute it
         AsyncDownload myAsyncTasks = new AsyncDownload();
         myAsyncTasks.execute();
+        mySwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        System.out.println("Refreshing");
+
+                        // This method performs the actual data-refresh operation.
+                        // The method calls setRefreshing(false) when it's finished.
+                        new AsyncDownload().execute();
+                    }
+                }
+        );
+
+
     }
 
-    private void showActi(JSONArray jsonArray, ArrayAdapter<String> adapter, List<String> ListElementsArrayList){
+    private void showActi(JSONArray jsonArray, SimpleAdapter adapter){
 //
         try {
             for (int i = 0; i < jsonArray.length(); i++) {
@@ -60,7 +81,10 @@ public class HistoryActivity extends AppCompatActivity {
                 String sentiment_text=jsonArray.getJSONObject(i).getString("sentiment_text");
                 String probability=jsonArray.getJSONObject(i).getString("probability");
                 String current_time=jsonArray.getJSONObject(i).getString("current_time");
-                ListElementsArrayList.add(sentiment+" "+sentiment_text+"-"+probability+"-"+current_time);
+                datum.put("First Line", sentiment+" "+sentiment_text);
+                datum.put("Second Line", probability+" "+current_time);
+//                datum.put(sentiment+" "+sentiment_text, probability+" "+current_time);
+                data.add(datum);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -135,9 +159,33 @@ public class HistoryActivity extends AppCompatActivity {
             // show results
             // dismiss the progress dialog after receiving data from API
             progressDialog.dismiss();
-            final List<String> ListElementsArrayList = new ArrayList<>(Arrays.asList(ListElements));
-            final ArrayAdapter<String> adapter = new ArrayAdapter<>
-                    (HistoryActivity.this, android.R.layout.simple_list_item_1, ListElementsArrayList);
+            datum.put("First Line", "First line of text");
+            datum.put("Second Line","Second line of text");
+            data.add(datum);
+            SimpleAdapter adapter = new SimpleAdapter(HistoryActivity.this, data,
+                    R.layout.list_view,
+                    new String[] {"First Line", "Second Line" },
+                    new int[] {R.id.text1, R.id.text2 });
+            ListView listView = (ListView) findViewById(R.id.listView2);
+            listView.setAdapter(adapter);
+//            final List<String> ListElementsArrayList = new ArrayList<>(Arrays.asList(ListElements));
+//            final ArrayAdapter<String> adapter = new ArrayAdapter<>
+//                    (HistoryActivity.this, android.R.layout.simple_list_item_1, ListElementsArrayList);
+//            final ArrayAdapter<String> adapter = new ArrayAdapter(HistoryActivity.this, android.R.layout.simple_list_item_2, android.R.id.text1, ListElements) {
+//                @Override
+//                public View getView(int position, View convertView, ViewGroup parent) {
+//                    System.out.println("here5");
+//                    View view = super.getView(position, convertView, parent);
+//                    TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+//                    TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+////                    String pred = ListElements[position];
+//                    System.out.println(position);
+////                    String[] parts = pred.split("-");
+//                    text1.setText("hi");
+//                    text2.setText("hey");
+//                    return view;
+//                }
+//            };
             listview.setAdapter(adapter);
             try {
 
@@ -147,7 +195,8 @@ public class HistoryActivity extends AppCompatActivity {
                 System.out.println(jsonArray.getJSONObject(0));
 //                String data = jsonArray.getJSONObject(0).getString("title");
 //                textView.setText(data);
-                showActi(jsonArray, adapter, ListElementsArrayList);
+                showActi(jsonArray, adapter);
+                mySwipeRefreshLayout.setRefreshing(false);
 //                for (int i = 0; i < jsonArray.length(); i++) {
 //                    String userId=jsonArray.getJSONObject(i).getString("userId");
 //                    String title=jsonArray.getJSONObject(i).getString("title");

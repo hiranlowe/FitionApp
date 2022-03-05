@@ -85,9 +85,9 @@ public class MainActivity extends AppCompatActivity {
         fab = findViewById(R.id.fab);
 //        GetValue = findViewById(R.id.editText1);
 
-        datum.put("First Line", "First line of text");
-        datum.put("Second Line","Second line of text");
-        data.add(datum);
+//        datum.put("First Line", "First line of text");
+//        datum.put("Second Line","Second line of text");
+//        data.add(datum);
         SimpleAdapter adapter = new SimpleAdapter(MainActivity.this, data,
                 R.layout.list_view,
                 new String[] {"First Line", "Second Line" },
@@ -99,6 +99,14 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onClick(View v) {
+                //create an MQTT client
+                final Mqtt5BlockingClient client = MqttClient.builder()
+                        .useMqttVersion5()
+                        .serverHost(host)
+                        .serverPort(8883)
+                        .sslWithDefaultConfig()
+                        .buildBlocking();
+
                 runOnUiThread(new Runnable() {
 
                     @Override
@@ -108,27 +116,30 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-                //create an MQTT client
-                final Mqtt5BlockingClient client = MqttClient.builder()
-                        .useMqttVersion5()
-                        .serverHost(host)
-                        .serverPort(8883)
-                        .sslWithDefaultConfig()
-                        .buildBlocking();
+
+                try {
 //
 //                //connect to HiveMQ Cloud with TLS and username/pw
-                client.connectWith()
-                        .simpleAuth()
-                        .username(username)
-                        .password(UTF_8.encode(password))
-                        .applySimpleAuth()
-                        .send();
+                    client.connectWith()
+                            .simpleAuth()
+                            .username(username)
+                            .password(UTF_8.encode(password))
+                            .applySimpleAuth()
+                            .send();
+                    Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_SHORT).show();
+                    addButton.setText("CONNECTED");
+                    addButton.setEnabled(false);
+                }catch (Exception e){
+                    System.out.println(e.getMessage());
+                    Toast.makeText(MainActivity.this, "not connected", Toast.LENGTH_SHORT).show();
+                }
+
 //
-                Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_SHORT).show();
+
 //
 //                //subscribe to the topic "my/test/topic"
                 client.subscribeWith()
-                        .topicFilter("my/test/topic")
+                        .topicFilter("testtopic")
                         .send();
 //
 //                //set a callback that is called when a message is received (using the async API style)
@@ -167,11 +178,11 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 System.out.println(msgs.size());
-                //publish a message to the topic "my/test/topic"
-                client.publishWith()
-                        .topic("my/test/topic")
-                        .payload(UTF_8.encode("sentiment"+" "+"sentiment_text"+"-"+"str(probability)"+" "+"current_time"))
-                        .send();
+//                //publish a message to the topic "my/test/topic"
+//                client.publishWith()
+//                        .topic("testtopic")
+//                        .payload(UTF_8.encode("sentiment"+" "+"sentiment_text"+"-"+"str(probability)"+" "+"current_time"))
+//                        .send();
             }
         });
 
@@ -222,9 +233,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showActi(String msg, SimpleAdapter adapter){
+        datum = new HashMap<String, String>(2);
         String[] parts = msg.split("-");
-        datum.put("First Line", parts[0]);
-        datum.put("Second Line",parts[1]);
+        datum.put("First Line", "Activity -"+" "+parts[0].split(" ")[1]);
+        datum.put("Second Line", "Probability -"+parts[1].split(" ")[0]+" "+"Time - "+parts[1].split(" ")[1]);
         data.add(datum);
         adapter.notifyDataSetChanged();
         return;

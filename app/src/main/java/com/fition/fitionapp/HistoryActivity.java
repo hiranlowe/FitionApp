@@ -11,8 +11,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toolbar;
@@ -26,9 +28,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 public class HistoryActivity extends AppCompatActivity {
 
@@ -36,8 +40,9 @@ public class HistoryActivity extends AppCompatActivity {
     List<Map<String, String>> data = new ArrayList<Map<String, String>>();
     Map<String, String> datum = new HashMap<String, String>(2);
 
-    ListView listview;
+    ListView listView;
     SwipeRefreshLayout mySwipeRefreshLayout;
+    ScrollView scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,17 +51,30 @@ public class HistoryActivity extends AppCompatActivity {
 
         // Get a support ActionBar corresponding to this toolbar
         ActionBar ab = getSupportActionBar();
-        listview = findViewById(R.id.listView2);
+        listView = findViewById(R.id.listView2);
         mySwipeRefreshLayout = findViewById(R.id.swiperefresh);
         // Enable the Up button
         ab.setDisplayHomeAsUpEnabled(true);
+        ab.setTitle("Activity History");
 
         // Get the Intent that started this activity and extract the string
         Intent intent = getIntent();
         String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
         // create object of MyAsyncTasks class and execute it
-        AsyncDownload myAsyncTasks = new AsyncDownload();
-        myAsyncTasks.execute();
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (listView.getChildAt(0) != null) {
+                    mySwipeRefreshLayout.setEnabled(listView.getFirstVisiblePosition() == 0 && listView.getChildAt(0).getTop() == 0);
+                }
+            }
+        });
+        new AsyncDownload().execute();
         mySwipeRefreshLayout.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
@@ -66,6 +84,7 @@ public class HistoryActivity extends AppCompatActivity {
                         // This method performs the actual data-refresh operation.
                         // The method calls setRefreshing(false) when it's finished.
                         new AsyncDownload().execute();
+                        mySwipeRefreshLayout.setRefreshing(false);
                     }
                 }
         );
@@ -75,14 +94,28 @@ public class HistoryActivity extends AppCompatActivity {
 
     private void showActi(JSONArray jsonArray, SimpleAdapter adapter){
 //
+        data = new ArrayList<Map<String, String>>();
         try {
-            for (int i = 0; i < jsonArray.length(); i++) {
+//            for (int i = 0; i < jsonArray.length(); i++) {
+//                String sentiment=jsonArray.getJSONObject(i).getString("sentiment");
+//                String sentiment_text=jsonArray.getJSONObject(i).getString("sentiment_text");
+//                String probability=jsonArray.getJSONObject(i).getString("probability");
+//                String current_time=jsonArray.getJSONObject(i).getString("current_time");
+//                datum = new HashMap<String, String>(2);
+//                datum.put("First Line", "Activity -"+" "+sentiment_text);
+//                datum.put("Second Line", "Probability -"+probability+" "+"Time - "+current_time);
+////                datum.put(sentiment+" "+sentiment_text, probability+" "+current_time);
+//                data.add(datum);
+//            }
+            System.out.println(jsonArray.getJSONObject(0).getString("sentiment"));
+            for (int i = jsonArray.length()-1; i > -1; i--) {
                 String sentiment=jsonArray.getJSONObject(i).getString("sentiment");
                 String sentiment_text=jsonArray.getJSONObject(i).getString("sentiment_text");
                 String probability=jsonArray.getJSONObject(i).getString("probability");
                 String current_time=jsonArray.getJSONObject(i).getString("current_time");
-                datum.put("First Line", sentiment+" "+sentiment_text);
-                datum.put("Second Line", probability+" "+current_time);
+                datum = new HashMap<String, String>(2);
+                datum.put("First Line", "Activity -"+" "+sentiment_text);
+                datum.put("Second Line", "Probability -"+probability+" "+"Time - "+current_time);
 //                datum.put(sentiment+" "+sentiment_text, probability+" "+current_time);
                 data.add(datum);
             }
@@ -159,15 +192,21 @@ public class HistoryActivity extends AppCompatActivity {
             // show results
             // dismiss the progress dialog after receiving data from API
             progressDialog.dismiss();
-            datum.put("First Line", "First line of text");
-            datum.put("Second Line","Second line of text");
-            data.add(datum);
+//            datum.put("First Line", "First line of text");
+//            datum.put("Second Line","Second line of text");
+//            data.add(datum);
             SimpleAdapter adapter = new SimpleAdapter(HistoryActivity.this, data,
                     R.layout.list_view,
                     new String[] {"First Line", "Second Line" },
                     new int[] {R.id.text1, R.id.text2 });
-            ListView listView = (ListView) findViewById(R.id.listView2);
             listView.setAdapter(adapter);
+
+//            datum.put("First Line", "Activity -"+" "+"sentiment_text");
+//            datum.put("Second Line", "Probability -"+"probability"+" "+"Time - "+"current_time");
+////                datum.put(sentiment+" "+sentiment_text, probability+" "+current_time);
+//            data.add(datum);
+//            adapter.notifyDataSetChanged();
+
 //            final List<String> ListElementsArrayList = new ArrayList<>(Arrays.asList(ListElements));
 //            final ArrayAdapter<String> adapter = new ArrayAdapter<>
 //                    (HistoryActivity.this, android.R.layout.simple_list_item_1, ListElementsArrayList);
@@ -186,7 +225,6 @@ public class HistoryActivity extends AppCompatActivity {
 //                    return view;
 //                }
 //            };
-            listview.setAdapter(adapter);
             try {
 
                 JSONArray jsonArray = new JSONArray(s);
@@ -195,8 +233,38 @@ public class HistoryActivity extends AppCompatActivity {
                 System.out.println(jsonArray.getJSONObject(0));
 //                String data = jsonArray.getJSONObject(0).getString("title");
 //                textView.setText(data);
-                showActi(jsonArray, adapter);
-                mySwipeRefreshLayout.setRefreshing(false);
+
+//                showActi(jsonArray, adapter);
+                try {
+//            for (int i = 0; i < jsonArray.length(); i++) {
+//                String sentiment=jsonArray.getJSONObject(i).getString("sentiment");
+//                String sentiment_text=jsonArray.getJSONObject(i).getString("sentiment_text");
+//                String probability=jsonArray.getJSONObject(i).getString("probability");
+//                String current_time=jsonArray.getJSONObject(i).getString("current_time");
+//                datum = new HashMap<String, String>(2);
+//                datum.put("First Line", "Activity -"+" "+sentiment_text);
+//                datum.put("Second Line", "Probability -"+probability+" "+"Time - "+current_time);
+////                datum.put(sentiment+" "+sentiment_text, probability+" "+current_time);
+//                data.add(datum);
+//            }
+                    System.out.println(jsonArray.getJSONObject(0).getString("sentiment"));
+                    for (int i = jsonArray.length()-1; i > -1; i--) {
+                        String sentiment=jsonArray.getJSONObject(i).getString("sentiment");
+                        String sentiment_text=jsonArray.getJSONObject(i).getString("sentiment_text");
+                        String probability=jsonArray.getJSONObject(i).getString("probability");
+                        String current_time=jsonArray.getJSONObject(i).getString("current_time");
+                        datum = new HashMap<String, String>(2);
+                        datum.put("First Line", "Activity -"+" "+sentiment_text);
+                        datum.put("Second Line", "Probability -"+probability+" "+"Time - "+current_time);
+//                datum.put(sentiment+" "+sentiment_text, probability+" "+current_time);
+                        data.add(datum);
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }finally {
+                    adapter.notifyDataSetChanged();
+                }
+
 //                for (int i = 0; i < jsonArray.length(); i++) {
 //                    String userId=jsonArray.getJSONObject(i).getString("userId");
 //                    String title=jsonArray.getJSONObject(i).getString("title");
